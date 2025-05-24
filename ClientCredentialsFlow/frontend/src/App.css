@@ -1,0 +1,73 @@
+src/App.css .App {
+  text-align: center;
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  font-size: calc(10px + 1vmin);
+  color: white;
+}
+
+.description {
+  margin-bottom: 20px;
+  color: #61dafb;
+  font-size: 0.9rem;
+}
+
+.fetch-button {
+  background-color: #61dafb;
+  color: #282c34;
+  font-size: 1rem;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 20px 0;
+}
+
+.fetch-button:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: #ff6b6b;
+  margin: 20px 0;
+  padding: 10px;
+  border: 1px solid #ff6b6b;
+  border-radius: 5px;
+  max-width: 80%;
+}
+
+.resource-container {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 20px;
+  width: 80%;
+  max-width: 800px;
+}
+
+.resource-data {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.token-info {
+  text-align: left;
+  font-size: 0.8rem;
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 10px;
+  border-radius: 5px;
+  overflow: auto;
+  max-height: 300px;
+}
+
+pre {
+  margin: 0;
+}
