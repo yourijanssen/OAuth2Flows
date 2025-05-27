@@ -37,81 +37,76 @@ public class ResourceController {
             System.out.println("Protected resource endpoint called");
 
             try {
-                  // Get authentication details from the token
                   Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                   Jwt jwt = (Jwt) authentication.getPrincipal();
 
-                  System.out.println("JWT claims: " + jwt.getClaims());
-                  System.out.println("JWT scopes: " + jwt.getClaimAsString("scope"));
-
                   Map<String, Object> response = new HashMap<>();
-                  response.put("message", "This is protected data - accessible only with valid JWT");
-                  response.put("access_notice",
-                              "This endpoint can only be accessed by clients registered in Keycloak with proper credentials");
-                  response.put("resourceId", "resource-123");
-                  response.put("timestamp", new Date().toString());
+                  response.put("title", "Protected Resource Access");
+                  response.put("description",
+                              "This endpoint returns JWT token and client metadata accessible with valid credentials.");
+                  response.put("resource_id", "resource-123");
+                  response.put("accessed_at", ZonedDateTime.now(ZoneId.systemDefault()).toString());
 
-                  // Add JWT token information
+                  // Token Metadata
                   Map<String, Object> tokenInfo = new HashMap<>();
                   tokenInfo.put("token_id", jwt.getId());
                   tokenInfo.put("subject", jwt.getSubject());
                   tokenInfo.put("client_id", jwt.getClaim("azp"));
                   tokenInfo.put("issuer", jwt.getIssuer().toString());
                   tokenInfo.put("audience", jwt.getAudience());
+                  tokenInfo.put("token_type", jwt.getClaimAsString("typ"));
+                  tokenInfo.put("scopes", jwt.getClaimAsString("scope"));
 
-                  // Format timestamps for readability
                   Instant issuedAt = jwt.getIssuedAt();
                   Instant expiresAt = jwt.getExpiresAt();
 
                   if (issuedAt != null) {
-                        ZonedDateTime issuedDateTime = ZonedDateTime.ofInstant(issuedAt, ZoneId.systemDefault());
-                        tokenInfo.put("issued_at", issuedDateTime.toString());
-                        tokenInfo.put("issued_at_timestamp", issuedAt.getEpochSecond());
+                        tokenInfo.put("issued_at", Map.of(
+                                    "raw", issuedAt.toString(),
+                                    "human", ZonedDateTime.ofInstant(issuedAt, ZoneId.systemDefault()).toString(),
+                                    "timestamp", issuedAt.getEpochSecond()));
                   }
 
                   if (expiresAt != null) {
-                        ZonedDateTime expiresDateTime = ZonedDateTime.ofInstant(expiresAt, ZoneId.systemDefault());
-                        tokenInfo.put("expires_at", expiresDateTime.toString());
-                        tokenInfo.put("expires_at_timestamp", expiresAt.getEpochSecond());
-
                         long validForSeconds = expiresAt.getEpochSecond() - Instant.now().getEpochSecond();
-                        tokenInfo.put("valid_for_seconds", validForSeconds);
+                        tokenInfo.put("expires_at", Map.of(
+                                    "raw", expiresAt.toString(),
+                                    "human", ZonedDateTime.ofInstant(expiresAt, ZoneId.systemDefault()).toString(),
+                                    "timestamp", expiresAt.getEpochSecond(),
+                                    "valid_for_seconds", validForSeconds));
                   }
 
-                  tokenInfo.put("token_type", jwt.getClaimAsString("typ"));
-                  tokenInfo.put("scopes", jwt.getClaimAsString("scope"));
+                  // Client & Token Creation Info
+                  Map<String, Object> clientInfo = new HashMap<>();
+                  clientInfo.put("auth_method", "Client Credentials Flow");
+                  clientInfo.put("grant_type", "client_credentials");
+                  clientInfo.put("authentication_type", "Client ID + Secret");
+                  clientInfo.put("token_endpoint", jwt.getIssuer() + "/protocol/openid-connect/token");
+                  clientInfo.put("preferred_username", jwt.getClaimAsString("preferred_username"));
+                  clientInfo.put("client_host", jwt.getClaimAsString("clientHost"));
+                  clientInfo.put("client_address", jwt.getClaimAsString("clientAddress"));
 
-                  // Include information about how the token was created
-                  Map<String, Object> tokenCreationInfo = new HashMap<>();
-                  tokenCreationInfo.put("auth_method", "Client Credentials Flow");
-                  tokenCreationInfo.put("grant_type", "client_credentials");
-                  tokenCreationInfo.put("client_authentication", "Client ID + Client Secret");
-                  tokenCreationInfo.put("token_endpoint", jwt.getIssuer() + "/protocol/openid-connect/token");
-                  tokenCreationInfo.put("username", jwt.getClaimAsString("preferred_username"));
-                  tokenCreationInfo.put("client_host", jwt.getClaimAsString("clientHost"));
-                  tokenCreationInfo.put("client_address", jwt.getClaimAsString("clientAddress"));
-
-                  // Add realm roles if present
+                  // Realm and Resource Roles
                   if (jwt.getClaim("realm_access") != null) {
                         Map<String, Object> realmAccess = jwt.getClaim("realm_access");
-                        tokenCreationInfo.put("realm_roles", realmAccess.get("roles"));
+                        clientInfo.put("realm_roles", realmAccess.get("roles"));
                   }
 
-                  // Add resource access if present
                   if (jwt.getClaim("resource_access") != null) {
-                        tokenCreationInfo.put("resource_access", jwt.getClaim("resource_access"));
+                        clientInfo.put("resource_access", jwt.getClaim("resource_access"));
                   }
 
-                  response.put("token_info", tokenInfo);
-                  response.put("token_creation", tokenCreationInfo);
+                  // Business Data (for demo)
+                  Map<String, Object> data = new HashMap<>();
+                  data.put("plan", "Premium");
+                  data.put("quota_limit", 1000);
+                  data.put("features",
+                              new String[] { "3D Viewer Access", "High Priority Support", "Analytics Dashboard" });
 
-                  // Include additional data for demonstration
-                  Map<String, Object> sensitiveData = new HashMap<>();
-                  sensitiveData.put("apiKey", "sk_test_protected_data_123456");
-                  sensitiveData.put("quota", 1000);
-                  sensitiveData.put("tier", "premium");
-
-                  response.put("data", sensitiveData);
+                  // Final structure
+                  response.put("token_metadata", tokenInfo);
+                  response.put("client_info", clientInfo);
+                  response.put("data", data);
 
                   System.out.println("Protected response created");
                   return response;
@@ -120,9 +115,10 @@ public class ResourceController {
                   e.printStackTrace();
 
                   Map<String, Object> errorResponse = new HashMap<>();
-                  errorResponse.put("error", "Error processing protected resource");
+                  errorResponse.put("error", "Unable to process protected resource");
                   errorResponse.put("message", e.getMessage());
                   return errorResponse;
             }
       }
+
 }

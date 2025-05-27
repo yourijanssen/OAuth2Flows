@@ -1,6 +1,5 @@
 package com.oauth2flows.authorizationcodeflow.security;
 
-import java.beans.Customizer;
 import java.util.Arrays;
 
 import org.springframework.context.annotation.Bean;
